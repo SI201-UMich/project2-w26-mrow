@@ -222,14 +222,24 @@ def avg_location_rating_by_room_type(data) -> dict:
     Returns:
         dict: {room_type: average_location_rating}
     """
-    # TODO: Implement checkout logic following the instructions
-    # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
-    # ==============================
-    # YOUR CODE ENDS HERE
-    # ==============================
+    totals = {}
+    counts = {}
+
+    for row in data:
+        room_type = row[5]
+        location_rating = row[6]
+
+        if location_rating == 0.0:
+            continue
+
+        totals[room_type] = totals.get(room_type, 0.0) + location_rating
+        counts[room_type] = counts.get(room_type, 0) + 1
+
+    averages = {}
+    for room_type in totals:
+        averages[room_type] = totals[room_type] / counts[room_type]
+
+    return averages
 
 
 def validate_policy_numbers(data) -> list[str]:
@@ -321,9 +331,8 @@ class TestCases(unittest.TestCase):
         os.remove(out_path)
 
     def test_avg_location_rating_by_room_type(self):
-        # TODO: Call avg_location_rating_by_room_type() and save the output.
-        # TODO: Check that the average for "Private Room" is 4.9.
-        pass
+        avg_ratings = avg_location_rating_by_room_type(self.detailed_data)
+        self.assertEqual(avg_ratings["Private Room"], 4.9)
 
     def test_validate_policy_numbers(self):
         # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
