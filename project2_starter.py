@@ -97,12 +97,12 @@ def get_listing_details(listing_id) -> dict:
 
     policy_match = re.search(r"Policy number:\s*\n?\s*([^\n]+)", clean_text)
     policy_number = policy_match.group(1).strip() if policy_match else ""
-    if policy_number == "pending":
+    if policy_number.lower() == "pending":
         policy_number = "Pending"
-    elif policy_number == "exempt":
+    elif policy_number.lower() == "exempt":
         policy_number = "Exempt"
 
-    host_type = "Superhost" if re.search(r"Superhost", clean_text) else "Not Superhost"
+    host_type = "Superhost" if re.search(r"Superhost", clean_text) else "regular"
 
     subtitle_match = re.search(r"([^\n]*hosted by[^\n]*)", clean_text)
     subtitle = subtitle_match.group(1) if subtitle_match else ""
@@ -191,14 +191,22 @@ def output_csv(data, filename) -> None:
     Returns:
         None
     """
-    # TODO: Implement checkout logic following the instructions
-    # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
-    # ==============================
-    # YOUR CODE ENDS HERE
-    # ==============================
+    sorted_data = sorted(data, key=lambda row: row[6], reverse=True)
+
+    with open(filename, "w") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(
+            [
+                "Listing Title",
+                "Listing ID",
+                "Policy Number",
+                "Host Type",
+                "Host Name",
+                "Room Type",
+                "Location Rating",
+            ]
+        )
+        writer.writerows(sorted_data)
 
 
 def avg_location_rating_by_room_type(data) -> dict:
@@ -298,9 +306,17 @@ class TestCases(unittest.TestCase):
     def test_output_csv(self):
         out_path = os.path.join(self.base_dir, "test.csv")
 
-        # TODO: Call output_csv() to write the detailed_data to a CSV file.
-        # TODO: Read the CSV back in and store rows in a list.
-        # TODO: Check that the first data row matches ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"].
+        output_csv(self.detailed_data, out_path)
+
+        rows = []
+        with open(out_path, "r") as csv_file:
+            reader = csv.reader(csv_file)
+            rows = list(reader)
+
+        self.assertEqual(
+            rows[1],
+            ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"],
+        )
 
         os.remove(out_path)
 
