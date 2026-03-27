@@ -37,11 +37,27 @@ def load_listing_results(html_path) -> list[tuple]:
     Returns:
         list[tuple]: A list of tuples containing (listing_title, listing_id)
     """
-    # TODO: Implement checkout logic following the instructions
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    with open(html_path, "r") as file:
+        soup = BeautifulSoup(file, "html.parser")
+
+    results = []
+
+    titles = soup.find_all(attrs={"data-testid": "listing-card-title"})
+
+    for title in titles:
+        title_text = title.get_text()
+        node_id = title.get("id", "")
+
+        if not title_text or not node_id.startswith("title_"):
+            continue
+
+        listing_id = node_id.replace("title_", "", 1)
+        results.append((title_text, listing_id))
+
+    return results
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -193,9 +209,8 @@ class TestCases(unittest.TestCase):
         self.detailed_data = create_listing_database(self.search_results_path)
 
     def test_load_listing_results(self):
-        # TODO: Check that the number of listings extracted is 18.
-        # TODO: Check that the FIRST (title, id) tuple is  ("Loft in Mission District", "1944564").
-        pass
+        self.assertEqual(len(self.listings), 18)
+        self.assertEqual(self.listings[0], ("Loft in Mission District", "1944564"))
 
     def test_get_listing_details(self):
         html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
