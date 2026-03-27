@@ -40,7 +40,7 @@ def load_listing_results(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    with open(html_path, "r") as file:
+    with open(html_path, "r", encoding="utf-8-sig") as file:
         soup = BeautifulSoup(file, "html.parser")
 
     results = []
@@ -55,6 +55,7 @@ def load_listing_results(html_path) -> list[tuple]:
             continue
 
         listing_id = node_id.replace("title_", "", 1)
+
         results.append((title_text, listing_id))
 
     return results
@@ -87,7 +88,7 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     html_path = os.path.join("html_files", f"listing_{listing_id}.html")
 
-    with open(html_path, "r") as file:
+    with open(html_path, "r", encoding="utf-8-sig") as file:
         soup = BeautifulSoup(file, "html.parser")
 
     text = soup.get_text("\n")
@@ -193,7 +194,7 @@ def output_csv(data, filename) -> None:
     """
     sorted_data = sorted(data, key=lambda row: row[6], reverse=True)
 
-    with open(filename, "w") as csvfile:
+    with open(filename, "w", encoding="utf-8-sig") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(
             [
@@ -253,14 +254,19 @@ def validate_policy_numbers(data) -> list[str]:
     Returns:
         list[str]: A list of listing_id values whose policy numbers do NOT match the valid format
     """
-    # TODO: Implement checkout logic following the instructions
-    # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
-    # ==============================
-    # YOUR CODE ENDS HERE
-    # ==============================
+    invalid_listings = []
+
+    for row in data:
+        listing_id = row[1]
+        policy_number = row[2]
+
+        if policy_number in ("Pending", "Exempt"):
+            continue
+
+        if not re.fullmatch(r"(20\d{2}-00\d{4}STR|STR-000\d{4})", policy_number):
+            invalid_listings.append(listing_id)
+
+    return invalid_listings
 
 
 # EXTRA CREDIT
@@ -273,14 +279,27 @@ def google_scholar_searcher(query):
     Returns:
         List of titles on the first page (list)
     """
-    # TODO: Implement checkout logic following the instructions
-    # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
-    # ==============================
-    # YOUR CODE ENDS HERE
-    # ==============================
+    url = "https://scholar.google.com/scholar"
+    params = {"q": query}
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    try:
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException:
+        return []
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    titles_list = soup.select("h3.gs_rt")
+
+    titles = []
+    for title_var in titles_list:
+        title = " ".join(title_var.get_text(" ").strip().split())
+        title = re.sub(r"^[^\w]*(\[[^\]]+\]\s*)+", "", title)
+        if title:
+            titles.append(title)
+
+    return titles
 
 
 class TestCases(unittest.TestCase):
@@ -319,7 +338,7 @@ class TestCases(unittest.TestCase):
         output_csv(self.detailed_data, out_path)
 
         rows = []
-        with open(out_path, "r") as csv_file:
+        with open(out_path, "r", encoding="utf-8-sig") as csv_file:
             reader = csv.reader(csv_file)
             rows = list(reader)
 
@@ -335,15 +354,20 @@ class TestCases(unittest.TestCase):
         self.assertEqual(avg_ratings["Private Room"], 4.9)
 
     def test_validate_policy_numbers(self):
-        # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
-        # TODO: Check that the list contains exactly "16204265" for this dataset.
-        pass
+        invalid_listings = validate_policy_numbers(self.detailed_data)
+        self.assertEqual(invalid_listings, ["16204265"])
 
 
 def main():
     detailed_data = create_listing_database(os.path.join("html_files", "search_results.html"))
     output_csv(detailed_data, "airbnb_dataset.csv")
-
+    
+    """
+    scholar_titles = google_scholar_searcher("airbnb housing policy")
+    print("Google Scholar titles found:", len(scholar_titles))
+    for title in scholar_titles:
+        print("-", title)
+    """
 
 if __name__ == "__main__":
     main()
