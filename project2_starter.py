@@ -1,14 +1,13 @@
 # SI 201 HW4 (Library Checkout System)
-# Your name:
-# Your student id:
-# Your email:
-# Who or what you worked with on this homework (including generative AI like ChatGPT):
+# Your name:Sahif Khan
+# Your student id:35893444
+# Your email:sahifk@umich.edu
+# Who or what you worked with on this homework (including generative AI like ChatGPT): Solo + ChatGPT
 # If you worked with generative AI also add a statement for how you used it.
-# e.g.:
-# Asked ChatGPT for hints on debugging and for suggestions on overall code structure
-#
+# e.g.: Yes, I used it for some direction when stuck, and help me understanding what tools I have at my disposal (different ways to use regex within python)
 # Did your use of GenAI on this assignment align with your goals and guidelines in your Gen AI contract? If not, why?
-#
+# Yes, I had some trouble figuring out how I wanted to strip out the [TAG] from titles for the extra credit. I used AI what tools I could use, and was
+# reccomended the sub method from the re library to replace the matched pattern with an empty string to clean my title. This aligned with the guidlinees in my contract.
 # --- ARGUMENTS & EXPECTED RETURN VALUES PROVIDED --- #
 # --- SEE INSTRUCTIONS FOR FULL DETAILS ON METHOD IMPLEMENTATION --- #
 
