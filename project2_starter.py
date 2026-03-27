@@ -82,11 +82,61 @@ def get_listing_details(listing_id) -> dict:
             }
         }
     """
-    # TODO: Implement checkout logic following the instructions
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    html_path = os.path.join("html_files", f"listing_{listing_id}.html")
+
+    with open(html_path, "r") as file:
+        soup = BeautifulSoup(file, "html.parser")
+
+    text = soup.get_text("\n")
+    lines = [" ".join(line.split()) for line in text.split("\n") if line.strip()]
+
+    clean_text = "\n".join(lines)
+
+    policy_match = re.search(r"Policy number:\s*\n?\s*([^\n]+)", clean_text)
+    policy_number = policy_match.group(1).strip() if policy_match else ""
+    if policy_number == "pending":
+        policy_number = "Pending"
+    elif policy_number == "exempt":
+        policy_number = "Exempt"
+
+    host_type = "Superhost" if re.search(r"Superhost", clean_text) else "Not Superhost"
+
+    subtitle_match = re.search(r"([^\n]*hosted by[^\n]*)", clean_text)
+    subtitle = subtitle_match.group(1) if subtitle_match else ""
+
+    host_name = ""
+    host_from_subtitle = re.search(r"hosted by\s*([^\n]+)", subtitle)
+    if host_from_subtitle:
+        host_name = host_from_subtitle.group(1).strip()
+    else:
+        host_line_match = re.search(r"Hosted by\s*([^\n]+)", clean_text)
+        if host_line_match:
+            host_name = host_line_match.group(1).strip()
+
+    host_name = host_name.split("·")[0].strip()
+
+    if re.search(r"Private", subtitle):
+        room_type = "Private Room"
+    elif re.search(r"Shared", subtitle):
+        room_type = "Shared Room"
+    else:
+        room_type = "Entire Room"
+
+    location_match = re.search(r"Location\s*\n\s*([0-5]\.[0-9])", clean_text)
+    location_rating = float(location_match.group(1)) if location_match else 0.0
+
+    return {
+        listing_id: {
+            "policy_number": policy_number,
+            "host_type": host_type,
+            "host_name": host_name,
+            "room_type": room_type,
+            "location_rating": location_rating,
+        }
+    }
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -103,11 +153,26 @@ def create_listing_database(html_path) -> list[tuple]:
         list[tuple]: A list of tuples. Each tuple contains:
         (listing_title, listing_id, policy_number, host_type, host_name, room_type, location_rating)
     """
-    # TODO: Implement checkout logic following the instructions
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    results = load_listing_results(html_path)
+    database = []
+
+    for listing_title, listing_id in results:
+        details = get_listing_details(listing_id)[listing_id]
+        row = (
+            listing_title,
+            listing_id,
+            details["policy_number"],
+            details["host_type"],
+            details["host_name"],
+            details["room_type"],
+            details["location_rating"],
+        )
+        database.append(row)
+
+    return database
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -214,21 +279,21 @@ class TestCases(unittest.TestCase):
 
     def test_get_listing_details(self):
         html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
+        details_list = [get_listing_details(listing_id) for listing_id in html_list]
 
-        # TODO: Call get_listing_details() on each listing id above and save results in a list.
-
-        # TODO: Spot-check a few known values by opening the corresponding listing_<id>.html files.
-        # 1) Check that listing 467507 has the correct policy number "STR-0005349".
-        # 2) Check that listing 1944564 has the correct host type "Superhost" and room type "Entire Room".
-        # 3) Check that listing 1944564 has the correct location rating 4.9.
-        pass
+        self.assertEqual(details_list[0]["467507"]["policy_number"], "STR-0005349")
+        self.assertEqual(details_list[2]["1944564"]["host_type"], "Superhost")
+        self.assertEqual(details_list[2]["1944564"]["room_type"], "Entire Room")
+        self.assertEqual(details_list[2]["1944564"]["location_rating"], 4.9)
 
     def test_create_listing_database(self):
-        # TODO: Check that each tuple in detailed_data has exactly 7 elements:
-        # (listing_title, listing_id, policy_number, host_type, host_name, room_type, location_rating)
+        for row in self.detailed_data:
+            self.assertEqual(len(row), 7)
 
-        # TODO: Spot-check the LAST tuple is ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8).
-        pass
+        self.assertEqual(
+            self.detailed_data[-1],
+            ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8),
+        )
 
     def test_output_csv(self):
         out_path = os.path.join(self.base_dir, "test.csv")
